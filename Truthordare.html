@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tebak-Tebakan Pilihan + Truth or Dare</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{
+            font-family:'Comic Neue',cursive;
+            height:100vh;
+            overflow:hidden;
+            background:linear-gradient(135deg,#ff9a9e,#fad0c4,#a1c4fd,#c2e9fb);
+            background-size:400% 400%;
+            animation:gradient 15s ease infinite;
+            color:#fff;
+            position:relative;
+        }
+        @keyframes gradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        
+        /* Emoji Latar */
+        .emoji-bg{position:absolute;width:100%;height:100%;pointer-events:none;z-index:0;}
+        .emoji{
+            position:absolute;font-size:4rem;opacity:0.7;
+            animation:float 20s infinite linear;
+            user-select:none;
+        }
+        @keyframes float{
+            0%{transform:translateY(100vh) rotate(0deg);}
+            100%{transform:translateY(-100px) rotate(360deg);}
+        }
+
+        .container{
+            position:relative;z-index:2;text-align:center;
+            max-width:650px;margin:0 auto;padding:20px;
+            top:50%;transform:translateY(-50%);
+        }
+        h1{font-size:3.5rem;text-shadow:4px 4px 0 #ff6b6b;margin-bottom:20px;}
+        .card{
+            background:rgba(255,255,255,0.95);color:#333;
+            border-radius:25px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,0.2);
+            margin:20px auto;min-height:250px;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+        }
+        .soal{font-size:2rem;margin-bottom:20px;}
+        .pilihan{
+            display:grid;grid-template-columns:1fr 1fr;gap:15px;width:100%;max-width:500px;
+        }
+        .opsi{
+            font-size:1.6rem;padding:18px;border-radius:15px;
+            background:#ffd93d;color:#333;cursor:pointer;
+            box-shadow:0 8px 15px rgba(0,0,0,0.2);
+            transition:0.3s;
+        }
+        .opsi:hover{transform:scale(1.08);background:#ff6b6b;color:#fff;}
+        .opsi.benar{background:#6bcf7f !important;color:#fff !important;}
+        .opsi.salah{background:#ff6b6b !important;color:#fff !important;}
+        button{
+            font-family:'Comic Neue',cursive;font-size:1.5rem;
+            padding:15px 30px;margin:15px;border:none;border-radius:50px;
+            cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,0.2);
+            transition:0.3s;
+        }
+        .btn-tebak{background:#ffd93d;}
+        .btn-tebak:hover{transform:scale(1.1);background:#54a0ff;color:#fff;}
+        .btn-truth{background:#a0e7e5;}
+        .btn-dare{background:#ff9ff3;}
+        .btn-next{background:#6bcf7f;}
+        .btn-truth:hover,.btn-dare:hover,.btn-next:hover{transform:scale(1.15);}
+        .hidden{display:none;}
+        .tugas{font-size:2rem;font-weight:bold;color:#ff6b6b;margin:20px;}
+    </style>
+</head>
+<body>
+    <div class="emoji-bg" id="emojiBg"></div>
+
+    <div class="container">
+        <h1>😶‍🌫️ Tebak-Tebakan Pilihan 🫨</h1>
+
+        <!-- TEBAKAN -->
+        <div id="tebak" class="card">
+            <p class="soal" id="soal">Klik MULAI!</p>
+            <div class="pilihan" id="pilihan"></div>
+            <button class="btn-tebak" id="btnMulai" onclick="mulai()">MULAI!</button>
+            <div id="feedback" style="margin-top:20px;font-size:2rem;"></div>
+        </div>
+
+        <!-- TRUTH OR DARE -->
+        <div id="tod" class="card hidden">
+            <h2 style="font-size:2.8rem;">KAMU SALAH! 😵‍💫</h2>
+            <p style="font-size:1.8rem;">Pilih hukumanmu:</p>
+            <button class="btn-truth" onclick="pilihTruth()">Truth</button>
+            <button class="btn-dare" onclick="pilihDare()">Dare</button>
+            <p class="tugas" id="tugas"></p>
+            <button class="btn-next hidden" id="btnSelesai" onclick="mainLagi()">SELESAI, MAIN LAGI!</button>
+        </div>
+    </03>
+
+<script>
+/* ==== 30 SOAL + 4 PILIHAN (1 BENAR) ==== */
+const dataSoal = [
+    {soal:"Sayuran yang bisa nyanyi?", jawab:"Kolguguk!", opsi:["Kolguguk!","Kolplay","Kolgurih","Kolplay"]},
+    {soal:"Buah yang selalu jadi penutup?", jawab:"Tomato!", opsi:["Tomato!","Apelagi","Pisangin","Manggaan"]},
+    {soal:"Hewan paling genit?", jawab:"Semute!", opsi:["Kucing","Semute!","Kupu-kupu","Lele"]},
+    {soal:"Ikan yang susah dilupain?", jawab:"Ikan lele-phoria!", opsi:["Ikan cupang","Ikan lele-phoria!","Ikan hiu","Ikan mas"]},
+    {soal:"Minuman juara 1?", jawab:"Teh Poci!", opsi:["Kopi","Teh Poci!","Susu","Jus"]},
+    {soal:"Kota paling genit?", jawab:"Bandung!", opsi:["Jakarta","Bandung!","Surabaya","Yogya"]},
+    {soal:"Makanan penutup acara?", jawab:"Es Krim!", opsi:["Gorengan","Es Krim!","Bakso","Mie"]},
+    {soal:"Sayur yang jadi band?", jawab:"Kolplay!", opsi:["Kolplay!","Brokoli","Bayam","Wortel"]},
+    {soal:"Buah yang suka nanya?", jawab:"Apelagi!", opsi:["Apelagi!","Jeruk","Mangga","Semangka"]},
+    {soal:"Hewan yang selalu lupa?", jawab:"Kupu-kupu!", opsi:["Gajah","Kupu-kupu!","Kamera","Kamera"]},
+    {soal:"Minuman yang bisa terbang?", jawab:"Teh Tarik!", opsi:["Teh Tarik!","Air Putih","Soda","Kopi"]},
+    {soal:"Sayuran yang paling pendiam?", jawab:"Kolplay!", opsi:["Kolplay!","Bayam","Sawi","Kangkung"]},
+    {soal:"Buah yang takut gelap?", jawab:"Pisaang!", opsi:["Pisaang!","Manggis","Durian","Rambutan"]},
+    {soal:"Hewan yang paling susah dilupain?", jawab:"Kamera!", opsi:["Kamera!","Kucing","Anjing","Burung"]},
+    {soal:"Makanan yang selalu jadi penutup?", jawab:"Es Krim!", opsi:["Nasi","Es Krim!","Roti","Mie"]},
+    {soal:"Sayur yang bisa nyanyi dangdut?", jawab:"Kolguguk!", opsi:["Kolguguk!","Timun","Tomat","Terong"]},
+    {soal:"Buah yang selalu jadi juara?", jawab:"Mangga-ju!", opsi:["Mangga-ju!","Jeruk","Alpukat","Nanas"]},
+    {soal:"Hewan paling genit di laut?", jawab:"Ikan cupang!", opsi:["Ikan hiu","Ikan cupang!","Paus","Lumba"]},
+    {soal:"Minuman yang bisa nyanyi?", jawab:"Teh Poci!", opsi:["Teh Poci!","Susu","Jus","Air"]},
+    {soal:"Sayuran yang jadi penutup?", jawab:"Kolplay!", opsi:["Sawi","Kolplay!","Bayam","Wortel"]},
+    {soal:"Buah yang selalu bilang 'lagi'?", jawab:"Apelagi!", opsi:["Apelagi!","Mangga","Jeruk","Semangka"]},
+    {soal:"Hewan yang paling susah dilupain?", jawab:"Kupu-kupu!", opsi:["Kupu-kupu!","Kamera","Kucing","Anjing"]},
+    {soal:"Minuman yang selalu jadi juara?", jawab:"Teh Poci!", opsi:["Kopi","Teh Poci!","Susu","Jus"]},
+    {soal:"Sayuran yang bisa nyanyi?", jawab:"Kolguguk!", opsi:["Brokoli","Kolguguk!","Bayam","Sawi"]},
+    {soal:"Buah yang selalu jadi penutup?", jawab:"Tomato!", opsi:["Tomato!","Apel","Pisang","Mangga"]},
+    {soal:"Hewan paling genit?", jawab:"Semute!", opsi:["Kucing","Semute!","Kupu-kupu","Lele"]},
+    {soal:"Ikan yang susah dilupain?", jawab:"Ikan lele-phoria!", opsi:["Ikan mas","Ikan lele-phoria!","Ikan hiu","Ikan cupang"]},
+    {soal:"Minuman juara 1?", jawab:"Teh Poci!", opsi:["Kopi","Teh Poci!","Susu","Jus"]},
+    {soal:"Kota paling genit?", jawab:"Bandung!", opsi:["Jakarta","Bandung!","Surabaya","Yogya"]},
+    {soal:"Makanan penutup acara?", jawab:"Es Krim!", opsi:["Gorengan","Es Krim!","Bakso","Mie"]}
+];
+
+/* ==== 20 TRUTH & 20 DARE ==== */
+const truth = [
+    "Siapa yang paling sering kamu stalking di IG?",
+    "Pernah naksir guru? Siapa?",
+    "Rahasia paling memalukan tahun ini?",
+    "Siapa gebetan rahasiamu sekarang?",
+    "Chat terakhir yang kamu hapus karena malu?",
+    "Pernah pacaran diam-diam? Berapa lama?",
+    "Mimpi paling aneh yang pernah kamu alami?",
+    "Siapa yang paling kamu takuti di grup?",
+    "Pernah pura-pura sakit biar ga ketemu orang?",
+    "Lagu apa yang kamu nyanyi di kamar mandi?",
+    "Pernah kirim chat salah orang? Isinya apa?",
+    "Hal paling gila yang pernah kamu googling?",
+    "Pernah naksir temen sendiri? Siapa?",
+    "Kata sandi HP-mu (bohong boleh)?",
+    "Pernah pacaran beda umur berapa tahun?",
+    "Kebiasaan aneh pas sendirian?",
+    "Siapa yang paling kamu kangenin sekarang?",
+    "Pernah bohong buat bolos? Ceritain!",
+    "Siapa yang paling genit di grup ini?",
+    "Apa status paling memalukan yang pernah kamu buat?"
+];
+const dare = [
+    "Nyanyi 1 bait lagu anak pake suara opera!",
+    "Video call random contact 10 detik bilang 'Aku sayang kamu!'",
+    "Teriak 'AKU SALAH!' dari jendela 3x",
+    "Selfie pake filter anjing + kirim ke grup",
+    "Baca chat terakhir keras-keras",
+    "Joget 15 detik (rekam!)",
+    "Ganti nama WA jadi 'Si Bodoh' 1 jam",
+    "Telpon temen bilang 'Mau ngajak nikah!'",
+    "Push-up 10x sambil nyanyi",
+    "Bikin status 'Aku lagi hamil' 10 menit",
+    "Impersonate temen 30 detik",
+    "Makan 1 sendok sambal (no air 1 menit)",
+    "Kirim voice note 'Baby Shark' full",
+    "Foto muka tanpa filter + kirim ke crush",
+    "Baca puisi cinta buat temen sebelah",
+    "Jalan mundur 10 langkah sambil bilang 'Aku salah!'",
+    "Pake topi tisu 3 menit",
+    "Tulis 'SALAH' di dahi pake lipstik",
+    "Rekam diri bilang 'Aku paling bodoh' 3x",
+    "Kirim sticker 'I love you' ke 5 orang random"
+];
+
+/* ==== EMOJI BACKGROUND ==== */
+const emojis = ['😶‍🌫️','🫨','😵‍💫','🤪','🥴','🤯','😵','🌀','🌪️','💫'];
+const bg = document.getElementById('emojiBg');
+for(let i=0;i<35;i++){
+    const e=document.createElement('div'); e.className='emoji';
+    e.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    e.style.left=Math.random()*100+'vw';
+    e.style.animationDelay=Math.random()*20+'s';
+    e.style.animationDuration=15+Math.random()*10+'s';
+    bg.appendChild(e);
+}
+
+/* ==== GAME LOGIC ==== */
+let soalSekarang;
+function mulai(){
+    document.getElementById('btnMulai').classList.add('hidden');
+    document.getElementById('feedback').innerHTML='';
+    const idx = Math.floor(Math.random()*dataSoal.length);
+    soalSekarang = dataSoal[idx];
+    document.getElementById('soal').innerHTML = soalSekarang.soal;
+    
+    const pilihanDiv = document.getElementById('pilihan');
+    pilihanDiv.innerHTML='';
+    // Acak urutan opsi
+    const opsiAcak = soalSekarang.opsi.sort(()=>Math.random()-0.5);
+    opsiAcak.forEach((opsi, i) => {
+        const btn = document.createElement('div');
+        btn.className='opsi';
+        btn.textContent = `${String.fromCharCode(65+i)}. ${opsi}`;
+        btn.onclick = () => cekJawaban(opsi, btn);
+        pilihanDiv.appendChild(btn);
+    });
+}
+
+function cekJawaban(pilihanUser, tombol){
+    // Nonaktifkan semua tombol
+    document.querySelectorAll('.opsi').forEach(b=>b.style.pointerEvents='none');
+    
+    if(pilihanUser === soalSekarang.jawab){
+        tombol.classList.add('benar');
+        document.getElementById('feedback').innerHTML = 
+            '<p style="color:#6bcf7f;font-size:2.5rem;">BENAR! YEAY! 🎉</p>';
+        setTimeout(mainLagi, 2500);
+    } else {
+        tombol.classList.add('salah');
+        document.getElementById('feedback').innerHTML = 
+            '<p style="color:#ff6b6b;font-size:2.5rem;">SALAH! 😵</p>';
+        setTimeout(pindahKeTOD, 1800);
+    }
+}
+
+function pindahKeTOD(){
+    document.getElementById('tebak').classList.add('hidden');
+    document.getElementById('tod').classList.remove('hidden');
+}
+function pilihTruth(){
+    const idx = Math.floor(Math.random()*truth.length);
+    document.getElementById('tugas').innerHTML = 'TRUTH:<br>' + truth[idx];
+    document.getElementById('btnSelesai').classList.remove('hidden');
+}
+function pilihDare(){
+    const idx = Math.floor(Math.random()*dare.length);
+    document.getElementById('tugas').innerHTML = 'DARE:<br>' + dare[idx];
+    document.getElementById('btnSelesai').classList.remove('hidden');
+}
+function mainLagi(){
+    document.getElementById('tebak').classList.remove('hidden');
+    document.getElementById('tod').classList.add('hidden');
+    document.getElementById('btnSelesai').classList.add('hidden');
+    document.getElementById('tugas').innerHTML='';
+    document.getElementById('btnMulai').classList.remove('hidden');
+    document.getElementById('soal').innerHTML='Klik MULAI!';
+    document.getElementById('pilihan').innerHTML='';
+    document.getElementById('feedback').innerHTML='';
+}
+</script>
+</body>
+</html>
